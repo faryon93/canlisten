@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"canlisten/can"
+	"canlisten/filter"
 
 	"github.com/tarm/serial"
 )
@@ -35,8 +36,9 @@ const (
 // ---------------------------------------------------------------------------------------
 
 var (
-	Device  string
-	Running = true
+	Device     string
+	FilterExpr string
+	Running    = true
 )
 
 // ---------------------------------------------------------------------------------------
@@ -85,6 +87,7 @@ func GetPrintableCmd(cmd string) string {
 
 func main() {
 	flag.StringVar(&Device, "dev", "/dev/ttyACM0", "")
+	flag.StringVar(&FilterExpr, "filter", "", "")
 	flag.Parse()
 
 	c := &serial.Config{Name: Device, Baud: 115200, ReadTimeout: 50 * time.Millisecond}
@@ -109,6 +112,9 @@ func main() {
 		log.Println("closing application")
 	}()
 
+	log.Printf("Using filter: \"%s\"", FilterExpr)
+	filterVm := filter.NewFilter(FilterExpr)
+
 	// print all can messages to stdout
 	stdout := log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
 	canCounter := 0
@@ -131,6 +137,17 @@ func main() {
 			continue
 		}
 		frame.Timestamp = time.Now()
+
+		// apply the filterVm
+		show, err := filterVm.Eval(frame)
+		if err != nil {
+			log.Println("failed to evaluate filterVm:", err.Error())
+			continue
+		}
+
+		if !show {
+			continue
+		}
 
 		// count message and print to stdout
 		canCounter++
