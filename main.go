@@ -101,10 +101,10 @@ func main() {
 	}
 
 	// gracefull shutdown on sigint/sigterm
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		<-sigs
+		<-sig
 		Running = false
 		log.Println("closing application")
 	}()
@@ -119,6 +119,7 @@ func main() {
 			continue
 		}
 
+		// ignore all non can messages
 		if cmd[0] != CmdCanTransmit {
 			log.Printf("ignoring command \"%s\": unexpected opcode", GetPrintableCmd(cmd))
 			continue
