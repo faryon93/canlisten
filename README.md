@@ -1,4 +1,5 @@
-#canlisten
+# canlisten
+
 The tool issues a "CAN Channel Open" command on startup. A baudrate of 1 MBit/s is selected.
 
 ```
